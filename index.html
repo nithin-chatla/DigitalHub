@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Hub - Your Premier Digital Content Library</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Swiper.js for Carousels -->
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+
+    <style>
+        /* Custom styles for a more professional look */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0B1120; /* Darker, more professional blue */
+            color: #E0E0E0;
+        }
+        .hero-bg {
+            background: linear-gradient(rgba(11, 17, 32, 0.85), rgba(11, 17, 32, 1)), url('https://placehold.co/1920x1080/0B1120/1E293B?text=Digital+Texture');
+            background-size: cover;
+            background-position: center;
+        }
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+        }
+        .ad-placeholder {
+            background-color: #1A2233;
+            border: 2px dashed #334155;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            min-height: 90px;
+        }
+        .search-bar {
+             background-color: #1A2233;
+             border: 1px solid #334155;
+             transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-bar:focus-within {
+             box-shadow: 0 0 0 2px #4f46e5; /* Indigo focus ring */
+             border-color: #4f46e5;
+        }
+        .loader {
+            border: 4px solid #334155;
+            border-top: 4px solid #6366f1; /* Indigo spinner */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(3000deg); }
+        }
+        /* Button Animations */
+        @keyframes pulse { 50% { opacity: .8; transform: scale(1.02); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8,0,1,1); } 50% { transform: none; animation-timing-function: cubic-bezier(0,0,0.2,1); } }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        .hover-animate-pulse:hover { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .hover-animate-bounce:hover { animation: bounce 1s infinite; }
+        .hover-animate-shake:hover { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
+        
+        /* Carousel Styles */
+        .swiper-button-next, .swiper-button-prev { color: #fff !important; }
+
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <!-- Header / Navigation -->
+    <header class="bg-slate-900/70 backdrop-blur-lg sticky top-0 z-50 shadow-lg shadow-black/30 border-b border-slate-800">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="text-2xl font-extrabold text-white">
+                <i class="fas fa-satellite-dish mr-2 text-indigo-400"></i> Digital Hub
+            </a>
+            <div id="desktop-nav-links" class="hidden md:flex items-center space-x-8 font-medium">
+                <!-- Dynamic nav links will be inserted here -->
+            </div>
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-2xl text-gray-300">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </nav>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-slate-800 p-4">
+             <!-- Dynamic mobile nav links will be inserted here -->
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-bg py-24 md:py-32">
+            <div class="container mx-auto px-6 text-center">
+                <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-4">Your Universe of Digital Content</h1>
+                <p class="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mb-10">
+                    Explore a curated library of the latest digital content, managed in real-time.
+                </p>
+                <a href="#explore" id="hero-explore-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full transition-transform transform hover:scale-105">
+                    Start Exploring
+                </a>
+            </div>
+        </section>
+
+        <!-- Ad Placeholder 1: Leaderboard -->
+        <div class="container mx-auto px-6 my-12">
+            <div class="ad-placeholder h-24 w-full max-w-4xl mx-auto text-center">
+                <!-- 
+                  PASTE YOUR 728x90 AD CODE HERE 
+                  For example, from Google AdSense.
+                -->
+                <p>Advertisement</p>
+            </div>
+        </div>
+        
+        <!-- DYNAMIC CONTENT CONTAINER -->
+        <div id="content-container">
+            <!-- Content sections will be dynamically generated and inserted here -->
+        </div>
+        
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-8 mt-16">
+        <div class="container mx-auto px-6 text-center text-gray-400">
+            <div class="mb-4">
+                 <a href="#" class="text-xl font-bold text-white">Digital Hub</a>
+            </div>
+            <div class="mb-4 space-x-6">
+                <a href="#" class="hover:text-indigo-400">About</a>
+                <a href="#" class="hover:text-indigo-400">Contact</a>
+                <a href="#" class="hover:text-indigo-400">Privacy Policy</a>
+                <a href="./admin.html" target="_blank" class="hover:text-indigo-400">Admin Login</a>
+            </div>
+            <p class="text-sm mb-4">
+                <strong>Disclaimer:</strong> This website is for demonstration purposes only. All content is dynamically loaded and should not be considered real.
+            </p>
+            <p class="text-sm">&copy; <span id="year"></span> Digital Hub. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        const firebaseConfig = {
+          apiKey: "AIzaSyD7-rp9EOXzI0qEYGjU3cktLhYWKisde2I",
+          authDomain: "movie-cdae4.firebaseapp.com",
+          projectId: "movie-cdae4",
+          storageBucket: "movie-cdae4.firebasestorage.app",
+          messagingSenderId: "641767148459",
+          appId: "1:641767148459:web:abfe0da9f79b35a061a0ee",
+          measurementId: "G-61BGKNMV80"
+        };
+
+        let app, db;
+        let pagesCache = [];
+        window.allContent = {};
+        
+        // --- GENERIC RENDERING ---
+        function renderGenericCard(item, page, layout = 'grid') {
+            const imageField = page.fields.find(f => f.type === 'image');
+            const displayField = page.displayField || page.fields.find(f => f.type === 'text')?.name;
+            const subtitleField = page.fields.find(f => f.name !== displayField && f.type === 'text');
+            const urlField = page.fields.find(f => f.type === 'url' || f.type === 'file');
+
+            const imageUrl = imageField ? item[imageField.name] : null;
+            const title = displayField ? item[displayField] : 'Untitled';
+            const subtitle = subtitleField ? item[subtitleField.name] : '';
+            const downloadLink = urlField ? item[urlField.name] : '#';
+
+            const button = page.button || {};
+            const btnAnimClass = button.animation !== 'none' ? `hover-animate-${button.animation}` : '';
+
+            if (layout === 'list') {
+                 return `
+                    <div class="bg-slate-800 rounded-lg shadow-lg flex items-center space-x-4 p-3 w-full">
+                        <img src="${imageUrl || 'https://placehold.co/100x100/1A2233/94a3b8?text=Img'}" alt="${title}" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <div class="flex-grow overflow-hidden">
+                            <h3 class="font-semibold truncate text-white">${title}</h3>
+                            <p class="text-sm text-gray-400 truncate">${subtitle}</p>
+                        </div>
+                        <a href="${downloadLink}" target="_blank" rel="noopener noreferrer" style="background-color: ${button.color || '#4f46e5'}" class="flex-shrink-0 text-white font-semibold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 text-sm ${btnAnimClass}">
+                            <i class="fas ${button.icon || 'fa-download'} mr-2"></i>${button.text || 'Download'}
+                        </a>
+                    </div>`;
+            }
+            
+            // Default to grid layout
+            return `
+                <div class="bg-slate-800 rounded-lg overflow-hidden shadow-lg card-hover flex flex-col">
+                    <img src="${imageUrl || 'https://placehold.co/500x500/1A2233/94a3b8?text=Image'}" alt="${title}" class="w-full h-auto object-cover aspect-square">
+                    <div class="p-4 flex flex-col flex-grow">
+                        <h3 class="font-semibold text-lg truncate text-white">${title}</h3>
+                        <p class="text-sm text-gray-400 flex-grow">${subtitle}</p>
+                        <a href="${downloadLink}" target="_blank" rel="noopener noreferrer" style="background-color: ${button.color || '#4f46e5'}" class="mt-4 w-full block text-center text-white font-semibold py-2 rounded-lg transition-colors text-sm ${btnAnimClass}">
+                            <i class="fas ${button.icon || 'fa-download'} mr-2"></i>${button.text || 'Download'}
+                        </a>
+                    </div>
+                </div>`;
+        }
+        
+        function renderItems(containerId, items, page) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            if (items.length === 0) {
+                container.innerHTML = `<p class="text-gray-500 col-span-full text-center py-8">No results found.</p>`;
+                return;
+            }
+            if (page.layout === 'carousel') {
+                 container.innerHTML = items.map(item => `<div class="swiper-slide">${renderGenericCard(item, page, 'grid')}</div>`).join('');
+            } else {
+                 container.innerHTML = items.map(item => renderGenericCard(item, page, page.layout)).join('');
+            }
+        }
+
+        async function fetchContent(page) {
+            const containerId = `content-container-${page.id}`;
+            const loaderId = `loader-${page.id}`;
+            const loader = document.getElementById(loaderId);
+            const container = document.getElementById(containerId);
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, page.id));
+                const fetchedData = [];
+                querySnapshot.forEach((doc) => fetchedData.push({ id: doc.id, ...doc.data() }));
+                window.allContent[page.id] = fetchedData;
+
+                if (fetchedData.length === 0) {
+                    container.innerHTML = `<p class="text-gray-500 col-span-full text-center py-8">No content has been added yet.</p>`;
+                } else {
+                    renderItems(containerId, fetchedData, page);
+                }
+            } catch (error) {
+                console.error(`Error fetching ${page.title}: `, error);
+                container.innerHTML = `<p class="text-red-400 col-span-full text-center">Could not load content.</p>`;
+            } finally {
+                if(loader) loader.style.display = 'none';
+                if (page.layout === 'carousel') initializeCarousels();
+            }
+        }
+        
+        // --- DYNAMIC SITE BUILDING ---
+        function buildNavigation(pages) {
+            const desktopNav = document.getElementById('desktop-nav-links');
+            const mobileNav = document.getElementById('mobile-menu');
+            desktopNav.innerHTML = pages.map(p => `<a href="#${p.id}" class="hover:text-indigo-400 transition-colors">${p.title}</a>`).join('');
+            mobileNav.innerHTML = pages.map(p => `<a href="#${p.id}" class="block py-2 text-center hover:bg-slate-700 rounded">${p.title}</a>`).join('');
+            
+            // Update hero button
+            const heroBtn = document.getElementById('hero-explore-btn');
+            if(pages.length > 0) heroBtn.href = `#${pages[0].id}`;
+        }
+        
+        function buildContentSections(pages) {
+            const container = document.getElementById('content-container');
+            container.innerHTML = pages.map((page, index) => {
+                let contentHtml = '';
+                const containerId = `content-container-${page.id}`;
+
+                switch(page.layout) {
+                    case 'list':
+                        contentHtml = `<div id="${containerId}" class="space-y-3"></div>`;
+                        break;
+                    case 'carousel':
+                         contentHtml = `
+                            <div class="swiper-container relative">
+                                <div id="${containerId}" class="swiper-wrapper"></div>
+                                <div class="swiper-button-next"></div>
+                                <div class="swiper-button-prev"></div>
+                            </div>`;
+                        break;
+                    default: // grid
+                         contentHtml = `<div id="${containerId}" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>`;
+                }
+
+                return `
+                    <section id="${page.id}" class="py-16 ${index % 2 !== 0 ? 'bg-slate-900/50' : ''}">
+                        <div class="container mx-auto px-6">
+                            <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                                <h2 class="text-3xl font-bold text-white"><i class="fas ${page.icon || 'fa-file-alt'} mr-3 text-indigo-400"></i>${page.title}</h2>
+                                <div class="w-full md:w-auto md:max-w-xs">
+                                    <div class="search-bar rounded-full flex items-center p-2 w-full">
+                                        <i class="fas fa-search text-gray-400 px-3"></i>
+                                        <input data-page-id="${page.id}" type="text" placeholder="Search ${page.title}..." class="search-input w-full bg-transparent focus:outline-none text-white placeholder-gray-400">
+                                    </div>
+                                </div>
+                            </div>
+                            ${contentHtml}
+                            <div id="loader-${page.id}" class="flex justify-center mt-8"><div class="loader"></div></div>
+                        </div>
+                    </section>
+                    ${index < pages.length -1 ? `
+                    <div class="container mx-auto px-6 my-10">
+                        <div class="ad-placeholder h-64 w-full max-w-lg mx-auto text-center">
+                            <!-- 
+                              PASTE YOUR 300x250 or 336x280 AD CODE HERE 
+                              This is a great spot for a medium rectangle ad.
+                            -->
+                            <p>Advertisement</p>
+                        </div>
+                    </div>` : ''}
+                `;
+            }).join('');
+        }
+
+        async function initializeWebsite() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                console.log("Firebase Initialized Successfully.");
+                
+                const pagesSnapshot = await getDocs(collection(db, '_pages'));
+                pagesCache = []; // Clear cache before fetching
+                pagesSnapshot.forEach(doc => pagesCache.push({ id: doc.id, ...doc.data() }));
+                pagesCache.sort((a,b) => a.title.localeCompare(b.title));
+
+                buildNavigation(pagesCache);
+                buildContentSections(pagesCache);
+                
+                addSearchListeners();
+
+                for (const page of pagesCache) {
+                    fetchContent(page);
+                }
+
+            } catch (e) {
+                console.error("Website initialization failed:", e);
+                document.getElementById('content-container').innerHTML = `<p class="text-red-400 text-center py-20">Error: Could not initialize the website. Please check the database connection and configuration.</p>`;
+            }
+        }
+        
+        initializeWebsite();
+
+        // --- Event Listeners & Initializers ---
+        function addSearchListeners() {
+            document.querySelectorAll('.search-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const pageId = e.target.dataset.pageId;
+                    const page = pagesCache.find(p => p.id === pageId);
+                    if (!page) return;
+
+                    const searchTerm = e.target.value.toLowerCase();
+                    const searchableFields = page.fields.filter(f => ['text', 'textarea'].includes(f.type)).map(f => f.name);
+
+                    const filteredContent = window.allContent[pageId].filter(item => {
+                        return searchableFields.some(field => item[field]?.toLowerCase().includes(searchTerm));
+                    });
+                    
+                    renderItems(`content-container-${pageId}`, filteredContent, page);
+                });
+            });
+        }
+        
+        function initializeCarousels() {
+            document.querySelectorAll('.swiper-container').forEach(el => {
+                new Swiper(el, {
+                    slidesPerView: 2,
+                    spaceBetween: 10,
+                    navigation: {
+                        nextEl: '.swiper-button-next',
+                        prevEl: '.swiper-button-prev',
+                    },
+                    breakpoints: {
+                        640: { slidesPerView: 3, spaceBetween: 20 },
+                        768: { slidesPerView: 4, spaceBetween: 20 },
+                        1024: { slidesPerView: 5, spaceBetween: 24 },
+                    }
+                });
+            });
+        }
+    </script>
+    
+    <script>
+        // --- UI Interactions (non-Firebase) ---
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Set current year in footer
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+
+</body>
+</html>
+

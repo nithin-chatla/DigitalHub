@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Hub - Admin CMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link { transition: background-color 0.2s, color 0.2s; }
+        .sidebar-link.active, .sidebar-link:hover { background-color: #4f46e5; color: white; }
+        .modal-bg { transition: opacity 0.3s ease; }
+        .modal-box { transition: transform 0.3s ease, opacity 0.3s ease; }
+        .hidden .modal-bg { opacity: 0; }
+        .hidden .modal-box { transform: scale(0.95); opacity: 0; }
+        .loader {
+            border: 4px solid #4a5568;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 40px; height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Style for field builder */
+        .field-builder-row { 
+            display: grid; 
+            grid-template-columns: auto 1fr 1fr 1fr auto auto; 
+            gap: 0.75rem; 
+            align-items: center;
+            padding: 8px;
+            border-radius: 4px;
+            background-color: rgba(255,255,255,0.02);
+            border: 1px solid #374151;
+        }
+        .field-options {
+            grid-column: 2 / -2;
+            padding-left: 2.25rem;
+        }
+        .drag-handle { cursor: grab; }
+        .sortable-ghost { background: #334155; opacity: 0.7; }
+        input[type="color"] { -webkit-appearance: none; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: 2px solid #4a5568; border-radius: 50%; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gray-900">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-sm">
+            <h2 class="text-3xl font-bold text-white text-center mb-6">Admin CMS Login</h2>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="email" class="block text-gray-400 mb-2">Email</label>
+                    <input type="email" id="email" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-gray-400 mb-2">Password</label>
+                    <input type="password" id="password" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-colors">Login</button>
+                <p id="login-error" class="text-red-500 text-sm mt-4 text-center"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="hidden flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 text-white flex-shrink-0 flex flex-col">
+            <div class="p-6 text-2xl font-bold border-b border-gray-700">
+                <i class="fas fa-satellite-dish mr-2 text-indigo-400"></i> Digital Hub CMS
+            </div>
+            <nav id="sidebar-nav" class="p-4 flex-1 overflow-y-auto">
+                <!-- Dynamic links will be inserted here -->
+            </nav>
+            <div class="p-4 border-t border-gray-700">
+                <a href="#manage-pages" id="manage-pages-link" class="sidebar-link flex items-center py-3 px-4 rounded-lg"><i class="fas fa-sitemap w-6 mr-3"></i>Manage Pages</a>
+                 <button id="logout-button" class="w-full text-left sidebar-link flex items-center py-3 px-4 rounded-lg mt-2"><i class="fas fa-sign-out-alt w-6 mr-3"></i>Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="main-content" class="flex-1 p-8 overflow-y-auto">
+            <!-- Dynamic content sections will be inserted here -->
+        </main>
+    </div>
+
+    <!-- Generic Add/Edit Modal -->
+    <div id="form-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="modal-bg absolute inset-0 bg-black bg-opacity-70"></div>
+        <div class="modal-box bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl relative max-h-full overflow-y-auto">
+             <div class="p-6 border-b border-gray-700 flex justify-between items-center sticky top-0 bg-gray-800 z-10">
+                <h3 id="modal-title" class="text-2xl font-bold text-white">Modal Title</h3>
+                <button id="close-modal-button" class="text-2xl text-gray-500 hover:text-white">&times;</button>
+            </div>
+            <form id="modal-form" class="p-6">
+                <!-- Form fields will be dynamically injected here -->
+            </form>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+         <div class="modal-bg absolute inset-0 bg-black bg-opacity-70"></div>
+         <div class="modal-box bg-gray-800 rounded-lg shadow-2xl w-full max-w-md relative p-6 text-center">
+            <h3 id="confirm-title" class="text-xl font-bold text-white mb-4">Are you sure?</h3>
+            <p id="confirm-text" class="text-gray-400 mb-6">This action cannot be undone.</p>
+            <div class="flex justify-center gap-4">
+                <button id="confirm-action-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg">Confirm</button>
+                <button id="cancel-action-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc, setDoc, writeBatch, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyD7-rp9EOXzI0qEYGjU3cktLhYWKisde2I",
+          authDomain: "movie-cdae4.firebaseapp.com",
+          projectId: "movie-cdae4",
+          storageBucket: "movie-cdae4.firebasestorage.app",
+          messagingSenderId: "641767148459",
+          appId: "1:641767148459:web:abfe0da9f79b35a061a0ee",
+          measurementId: "G-61BGKNMV80"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const CLOUD_NAME = "dugnv4zww";
+        const UPLOAD_PRESET = "MovieHub";
+        
+        let pagesCache = [];
+        let contentCache = {};
+        let currentSectionId = null;
+        let confirmationCallback = null;
+        let sortableInstance = null;
+        
+        const loginScreen = document.getElementById('login-screen');
+        const dashboard = document.getElementById('dashboard');
+        const mainContent = document.getElementById('main-content');
+        const sidebarNav = document.getElementById('sidebar-nav');
+        const modal = {
+            container: document.getElementById('form-modal'),
+            title: document.getElementById('modal-title'),
+            form: document.getElementById('modal-form'),
+            closeBtn: document.getElementById('close-modal-button')
+        };
+        const confirmModal = {
+            container: document.getElementById('confirm-modal'),
+            title: document.getElementById('confirm-title'),
+            text: document.getElementById('confirm-text'),
+            confirmBtn: document.getElementById('confirm-action-btn'),
+            cancelBtn: document.getElementById('cancel-action-btn')
+        };
+        
+        // --- AUTHENTICATION ---
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                loginScreen.classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                dashboard.classList.add('flex');
+                initializeCms();
+            } else {
+                loginScreen.classList.remove('hidden');
+                dashboard.classList.add('hidden');
+                dashboard.classList.remove('flex');
+            }
+        });
+        document.getElementById('login-form').addEventListener('submit', async e => {
+            e.preventDefault();
+            const [email, password] = [e.target.email.value, e.target.password.value];
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                document.getElementById('login-error').textContent = error.message;
+            }
+        });
+        document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
+
+        // --- CMS INITIALIZATION ---
+        async function initializeCms() {
+            await checkAndCreateInitialPages();
+            pagesCache = await fetchPages();
+            buildSidebar();
+            if (pagesCache.length > 0) {
+                navigateToSection(pagesCache[0].id);
+            } else {
+                navigateToSection('manage-pages');
+            }
+        }
+
+        async function checkAndCreateInitialPages() {
+            const pagesCollection = collection(db, '_pages');
+            const snapshot = await getDocs(query(pagesCollection));
+            if (snapshot.empty) {
+                const batch = writeBatch(db);
+                const initialPages = [
+                    { id: 'movies', title: 'Movies', icon: 'fa-video', displayField: 'title', layout: 'grid', button: { text: 'Download', color: '#4f46e5', animation: 'pulse', icon: 'fa-download'}, fields: [ {name: 'title', label: 'Title', type: 'text', required: true, placeholder: 'e.g., Inception'}, {name: 'genre', label: 'Genre', type: 'text', required: false, placeholder: 'e.g., Sci-Fi'}, {name: 'downloadLink', label: 'Download Link', type: 'url', required: true}, {name: 'imageUrl', label: 'Image', type: 'image', required: false} ] },
+                    { id: 'music', title: 'Music', icon: 'fa-music', displayField: 'title', layout: 'list', button: { text: 'Play', color: '#10b981', animation: 'bounce', icon: 'fa-play'}, fields: [ {name: 'title', label: 'Title', type: 'text', required: true}, {name: 'artist', label: 'Artist', type: 'text', required: false}, {name: 'downloadLink', label: 'Download Link', type: 'url', required: true}, {name: 'imageUrl', label: 'Album Art', type: 'image', required: false} ] },
+                    { id: 'study_materials', title: 'Study Materials', displayField: 'title', icon: 'fa-book-open', layout: 'grid', button: { text: 'Get File', color: '#f59e0b', animation: 'shake', icon: 'fa-file-arrow-down'}, fields: [ {name: 'title', label: 'Title', type: 'text', required: true}, {name: 'description', label: 'Description', type: 'textarea', required: false, helpText: 'A brief summary of the material.'}, {name: 'downloadLink', label: 'Download Link', type: 'url', required: true}, {name: 'fileType', label: 'File Type', type: 'select', options: 'PDF,ZIP,DOC', required: true } ] },
+                ];
+                initialPages.forEach(p => {
+                    const docRef = doc(db, '_pages', p.id);
+                    batch.set(docRef, p);
+                });
+                await batch.commit();
+            }
+        }
+        
+        async function fetchPages() {
+            const querySnapshot = await getDocs(collection(db, '_pages'));
+            const pages = [];
+            querySnapshot.forEach(doc => pages.push({ ...doc.data(), id: doc.id }));
+            return pages.sort((a,b) => a.title.localeCompare(b.title));
+        }
+
+        function buildSidebar() {
+            const links = pagesCache.map(p => 
+                `<a href="#${p.id}" data-section="${p.id}" class="sidebar-link flex items-center py-3 px-4 rounded-lg mt-2">
+                    <i class="fas ${p.icon || 'fa-file-alt'} w-6 mr-3"></i>${p.title}
+                </a>`
+            ).join('');
+            sidebarNav.innerHTML = links;
+        }
+
+        function navigateToSection(sectionId) {
+            currentSectionId = sectionId;
+            document.querySelectorAll('.sidebar-link.active').forEach(l => l.classList.remove('active'));
+            const activeLink = document.querySelector(`.sidebar-link[href="#${sectionId}"]`);
+            if(activeLink) activeLink.classList.add('active');
+
+            if (sectionId === 'manage-pages') {
+                renderManagePages();
+            } else {
+                renderContentSection(sectionId);
+            }
+        }
+
+        // --- RENDER FUNCTIONS ---
+        async function renderContentSection(sectionId) {
+            const page = pagesCache.find(p => p.id === sectionId);
+            if (!page) return;
+
+            mainContent.innerHTML = `
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-3xl font-bold text-white">${page.title}</h1>
+                    <div>
+                        <input type="text" id="search-input" class="bg-gray-700 p-2 rounded-lg mr-4" placeholder="Search..." data-section="${sectionId}">
+                        <button id="add-new-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">
+                            <i class="fas fa-plus mr-2"></i>Add New
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-gray-800 rounded-lg shadow-xl overflow-x-auto">
+                    <div id="loader-container" class="h-64 flex items-center justify-center"><div class="loader"></div></div>
+                    <table class="w-full text-left hidden">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>`;
+            
+            await fetchContentForPage(sectionId);
+        }
+
+        async function fetchContentForPage(sectionId) {
+            const container = document.getElementById('loader-container').parentElement;
+            const loader = container.querySelector('#loader-container');
+            const table = container.querySelector('table');
+            
+            loader.style.display = 'flex'; table.classList.add('hidden');
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, sectionId));
+                contentCache[sectionId] = [];
+                querySnapshot.forEach(doc => contentCache[sectionId].push({ id: doc.id, ...doc.data() }));
+                renderContentList(sectionId, contentCache[sectionId]);
+            } catch (error) {
+                console.error(`Error fetching ${sectionId}:`, error);
+                container.innerHTML = `<p class="text-center p-8 text-red-400">Failed to load content.</p>`;
+            } finally {
+                loader.style.display = 'none'; table.classList.remove('hidden');
+            }
+        }
+
+        function renderContentList(sectionId, data) {
+            const page = pagesCache.find(p => p.id === sectionId);
+            const table = mainContent.querySelector('table');
+            if (!page || !table) return;
+
+            const imageField = page.fields.find(f => f.type === 'image');
+            const displayField = page.displayField || page.fields.find(f => f.type === 'text')?.name || 'id';
+
+
+            // Render table headers
+            let headers = '';
+            if (imageField) headers += `<th class="p-4">Image</th>`;
+            headers += `<th class="p-4">${page.fields.find(f => f.name === displayField)?.label || 'Primary'}</th>`;
+            // Add other columns, excluding the display field
+            headers += page.fields.filter(f => f.type !== 'image' && f.name !== displayField).slice(0, 2).map(f => `<th class="p-4">${f.label}</th>`).join('');
+            headers += `<th class="p-4 text-right">Actions</th>`;
+            table.querySelector('thead').innerHTML = `<tr class="bg-gray-700 uppercase text-sm text-gray-400">${headers}</tr>`;
+            
+            // Render table body
+            const tbody = table.querySelector('tbody');
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-gray-500">No content added yet.</td></tr>`;
+            } else {
+                tbody.innerHTML = data.map(item => {
+                    let row = '';
+                    if (imageField) {
+                        row += `<td class="p-4"><img src="${item[imageField.name] || 'https://placehold.co/80x80/1e293b/475569?text=N/A'}" class="h-12 w-12 object-cover rounded"></td>`;
+                    }
+                    row += `<td class="p-4 font-semibold truncate" style="max-width: 200px;">${item[displayField] || ''}</td>`;
+                    row += page.fields.filter(f => f.type !== 'image' && f.name !== displayField).slice(0, 2).map(f => `<td class="p-4 truncate" style="max-width: 200px;">${item[f.name] || ''}</td>`).join('');
+                    row += `<td class="p-4 text-right whitespace-nowrap">
+                        <button class="edit-btn text-blue-400 hover:text-blue-300 mr-4" data-id="${item.id}"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="delete-btn text-red-500 hover:text-red-400" data-id="${item.id}"><i class="fas fa-trash"></i> Delete</button>
+                    </td>`;
+                    return `<tr class="border-b border-gray-700 hover:bg-gray-700">${row}</tr>`;
+                }).join('');
+            }
+        }
+        
+        function renderManagePages() {
+             mainContent.innerHTML = `
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-3xl font-bold text-white">Manage Pages</h1>
+                    <button id="add-new-page-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">
+                        <i class="fas fa-plus mr-2"></i>Add New Page
+                    </button>
+                </div>
+                <div class="bg-gray-800 rounded-lg shadow-xl overflow-x-auto">
+                     <table class="w-full text-left">
+                        <thead class="bg-gray-700 uppercase text-sm text-gray-400"><tr><th class="p-4">Title</th><th class="p-4">Page ID</th><th class="p-4">Icon</th><th class="p-4 text-right">Actions</th></tr></thead>
+                        <tbody>${pagesCache.map(p => `
+                            <tr class="border-b border-gray-700 hover:bg-gray-700">
+                                <td class="p-4 font-semibold">${p.title}</td><td class="p-4 text-gray-400 font-mono">${p.id}</td>
+                                <td class="p-4 text-gray-400"><i class="fas ${p.icon}"></i></td>
+                                <td class="p-4 text-right">
+                                     <button class="edit-page-btn text-blue-400 hover:text-blue-300 mr-4" data-id="${p.id}"><i class="fas fa-edit"></i> Edit</button>
+                                     <button class="delete-page-btn text-red-500 hover:text-red-400" data-id="${p.id}"><i class="fas fa-trash"></i> Delete</button>
+                                </td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+        }
+
+        // --- DYNAMIC FORM & MODAL LOGIC ---
+        function openContentForm(sectionId, data = {}) {
+            const page = pagesCache.find(p => p.id === sectionId);
+            modal.title.textContent = data.id ? `Edit ${page.title}` : `Add New ${page.title}`;
+            
+            modal.form.innerHTML = page.fields.map(field => {
+                if (field.type === 'headline') {
+                    return `<h4 class="text-xl font-bold mt-6 mb-2 pb-2 border-b border-gray-700">${field.label}</h4>`;
+                }
+                const required = field.required ? 'required' : '';
+                const placeholder = field.placeholder ? `placeholder="${field.placeholder}"` : '';
+                let inputHtml = '';
+                switch (field.type) {
+                    case 'image':
+                    case 'file':
+                        const fileType = field.type === 'image' ? 'image/*' : '*/*'
+                        inputHtml = `<input type="file" name="${field.name}_file" accept="${fileType}" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"><small class="text-gray-500">Leave empty if not changing.</small><input type="hidden" name="${field.name}" value="${data[field.name] || ''}">`;
+                        break;
+                    case 'select':
+                        const options = field.options.split(',').map(opt => `<option value="${opt.trim()}" ${data[field.name] === opt.trim() ? 'selected' : ''}>${opt.trim()}</option>`).join('');
+                        inputHtml = `<select name="${field.name}" class="w-full bg-gray-700 p-2 rounded" ${required}>${options}</select>`;
+                        break;
+                    case 'textarea':
+                        inputHtml = `<textarea name="${field.name}" class="w-full bg-gray-700 p-2 rounded" rows="4" ${placeholder} ${required}>${data[field.name] || ''}</textarea>`;
+                        break;
+                    case 'checkbox':
+                        const checked = data[field.name] ? 'checked' : '';
+                        inputHtml = `<div class="flex items-center"><input type="checkbox" name="${field.name}" class="h-4 w-4 bg-gray-700 border-gray-600 rounded" ${checked}></div>`
+                        break;
+                    default: // text, url, number, date
+                        inputHtml = `<input type="${field.type}" name="${field.name}" value="${data[field.name] || ''}" class="w-full bg-gray-700 p-2 rounded" ${placeholder} ${required}>`;
+                }
+                const helpText = field.helpText ? `<p class="text-xs text-gray-500 mt-1">${field.helpText}</p>` : '';
+                return `<div class="mb-4"><label class="block text-gray-400 mb-2">${field.label}${field.required ? '<span class="text-red-500 ml-1">*</span>': ''}</label>${inputHtml}${helpText}</div>`;
+            }).join('') + `<input type="hidden" name="id" value="${data.id || ''}"><button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg mt-4">Save</button>`;
+
+            modal.container.classList.remove('hidden');
+        }
+        
+        function openPageForm(pageData = {}) {
+            modal.title.textContent = pageData.id ? 'Edit Page' : 'Add New Page';
+            const textFields = (pageData.fields || []).filter(f => f.type === 'text').map(f => `<option value="${f.name}" ${pageData.displayField === f.name ? 'selected' : ''}>${f.label}</option>`).join('');
+            
+            modal.form.innerHTML = `
+                <div class="space-y-4">
+                     <div>
+                        <h4 class="font-bold text-lg border-b border-gray-700 pb-2 mb-4">Page Settings</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-gray-400 mb-2">Page Title</label><input type="text" id="page-title-input" class="w-full bg-gray-700 p-2 rounded" value="${pageData.title || ''}" required></div>
+                            <div><label class="block text-gray-400 mb-2">Page ID</label><input type="text" id="page-id-input" class="w-full bg-gray-600 p-2 rounded text-gray-400" value="${pageData.id || ''}" readonly></div>
+                            <div><label class="block text-gray-400 mb-2">Font Awesome Icon Class</label><input type="text" id="page-icon-input" class="w-full bg-gray-700 p-2 rounded" placeholder="e.g., fa-camera" value="${pageData.icon || ''}"></div>
+                            <div><label class="block text-gray-400 mb-2">Primary Display Field</label><select id="page-display-field" class="w-full bg-gray-700 p-2 rounded">${textFields}</select></div>
+                             <div><label class="block text-gray-400 mb-2">Content Layout</label><select id="page-layout" class="w-full bg-gray-700 p-2 rounded">
+                                <option value="grid" ${pageData.layout === 'grid' ? 'selected' : ''}>Grid</option>
+                                <option value="list" ${pageData.layout === 'list' ? 'selected' : ''}>List</option>
+                                <option value="carousel" ${pageData.layout === 'carousel' ? 'selected' : ''}>Carousel</option>
+                            </select></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg border-b border-gray-700 pb-2 mb-4">Button Editor</h4>
+                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
+                            <div><label class="block text-gray-400 mb-2">Button Text</label><input type="text" id="button-text" class="w-full bg-gray-700 p-2 rounded" value="${pageData.button?.text || 'Download'}"></div>
+                            <div><label class="block text-gray-400 mb-2">Button Icon</label><input type="text" id="button-icon" class="w-full bg-gray-700 p-2 rounded" placeholder="fa-download" value="${pageData.button?.icon || 'fa-download'}"></div>
+                            <div><label class="block text-gray-400 mb-2">Animation</label><select id="button-animation" class="w-full bg-gray-700 p-2 rounded">
+                                <option value="none" ${pageData.button?.animation === 'none' ? 'selected' : ''}>None</option>
+                                <option value="pulse" ${pageData.button?.animation === 'pulse' ? 'selected' : ''}>Pulse</option>
+                                <option value="bounce" ${pageData.button?.animation === 'bounce' ? 'selected' : ''}>Bounce</option>
+                                <option value="shake" ${pageData.button?.animation === 'shake' ? 'selected' : ''}>Shake</option>
+                            </select></div>
+                             <div class="text-center"><label class="block text-gray-400 mb-2">Color</label><input type="color" id="button-color" value="${pageData.button?.color || '#4f46e5'}"></div>
+                         </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg border-b border-gray-700 pb-2 mb-4">Page Fields</h4>
+                        <div id="field-builder" class="space-y-2 text-sm mt-4"></div>
+                        <button type="button" id="add-field-btn" class="text-sm mt-3 text-indigo-400 hover:text-indigo-300">+ Add Field</button>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg mt-6">${pageData.id ? 'Save Changes' : 'Create Page'}</button>
+            `;
+            const fieldBuilder = modal.form.querySelector('#field-builder');
+            modal.form.querySelector('#add-field-btn').addEventListener('click', () => addFieldRow(fieldBuilder));
+            
+            if (pageData.fields && pageData.fields.length > 0) {
+                pageData.fields.forEach(field => addFieldRow(fieldBuilder, field));
+            } else {
+                addFieldRow(fieldBuilder, {type: 'text', label: 'Title', name: 'title', required: true});
+            }
+
+            if(sortableInstance) sortableInstance.destroy();
+            sortableInstance = new Sortable(fieldBuilder, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost'
+            });
+
+            modal.container.classList.remove('hidden');
+        }
+
+        function addFieldRow(container, data = {}) {
+            const row = document.createElement('div');
+            row.className = 'field-builder-row';
+            row.innerHTML = `
+                <i class="fas fa-grip-vertical drag-handle text-gray-500"></i>
+                <input type="text" placeholder="Field Label" class="field-label bg-gray-700 p-2 rounded" value="${data.label || ''}" required>
+                <input type="text" placeholder="field_name" class="field-name bg-gray-600 p-2 rounded text-gray-400" value="${data.name || ''}" readonly>
+                <select class="field-type bg-gray-700 p-2 rounded">
+                    <option value="text" ${data.type === 'text' ? 'selected' : ''}>Text</option>
+                    <option value="textarea" ${data.type === 'textarea' ? 'selected' : ''}>Text Area</option>
+                    <option value="url" ${data.type === 'url' ? 'selected' : ''}>URL</option>
+                    <option value="image" ${data.type === 'image' ? 'selected' : ''}>Image</option>
+                    <option value="file" ${data.type === 'file' ? 'selected' : ''}>File</option>
+                    <option value="number" ${data.type === 'number' ? 'selected' : ''}>Number</option>
+                    <option value="date" ${data.type === 'date' ? 'selected' : ''}>Date</option>
+                    <option value="checkbox" ${data.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
+                    <option value="select" ${data.type === 'select' ? 'selected' : ''}>Select</option>
+                    <option value="headline" ${data.type === 'headline' ? 'selected' : ''}>Headline</option>
+                </select>
+                 <div class="flex items-center justify-center"><input type="checkbox" class="field-required bg-gray-700" ${data.required ? 'checked' : ''}> <label class="text-xs ml-1">Req.</label></div>
+                <button type="button" class="remove-field-btn text-red-500 hover:text-red-400 text-lg">&times;</button>
+                <div class="field-options hidden"></div>
+            `;
+            container.appendChild(row);
+
+            const typeSelector = row.querySelector('.field-type');
+            const optionsContainer = row.querySelector('.field-options');
+
+            const updateOptions = () => {
+                const type = typeSelector.value;
+                optionsContainer.innerHTML = '';
+                optionsContainer.classList.add('hidden');
+                if (['text', 'textarea', 'url', 'number'].includes(type)) {
+                    optionsContainer.innerHTML = `<input type="text" class="field-placeholder bg-gray-600 p-2 rounded w-full mt-2" placeholder="Placeholder Text" value="${data.placeholder || ''}">`;
+                    optionsContainer.classList.remove('hidden');
+                }
+                if (['text', 'textarea', 'url', 'number', 'select', 'date', 'checkbox', 'image', 'file'].includes(type)) {
+                     const currentHtml = optionsContainer.innerHTML;
+                     optionsContainer.innerHTML = currentHtml + `<input type="text" class="field-help-text bg-gray-600 p-2 rounded w-full mt-2" placeholder="Help Text / Description" value="${data.helpText || ''}">`;
+                     optionsContainer.classList.remove('hidden');
+                }
+                if (type === 'select') {
+                    const currentHtml = optionsContainer.innerHTML;
+                    optionsContainer.innerHTML = currentHtml + `<input type="text" class="field-select-options bg-gray-600 p-2 rounded w-full mt-2" placeholder="Comma-separated options, e.g., A, B, C" value="${data.options || ''}">`;
+                }
+            };
+            
+            typeSelector.addEventListener('change', updateOptions);
+            row.querySelector('.remove-field-btn').addEventListener('click', () => row.remove());
+            updateOptions();
+        }
+
+        // --- EVENT HANDLERS ---
+        sidebarNav.addEventListener('click', e => {
+            if (e.target.closest('a')) {
+                e.preventDefault();
+                navigateToSection(e.target.closest('a').dataset.section);
+            }
+        });
+        document.getElementById('manage-pages-link').addEventListener('click', e => {
+             e.preventDefault();
+             navigateToSection('manage-pages');
+        });
+        
+        mainContent.addEventListener('click', e => {
+            const editBtn = e.target.closest('.edit-btn');
+            const deleteBtn = e.target.closest('.delete-btn');
+            const editPageBtn = e.target.closest('.edit-page-btn');
+            const deletePageBtn = e.target.closest('.delete-page-btn');
+
+            if (e.target.closest('#add-new-btn')) openContentForm(currentSectionId);
+            if (editBtn) {
+                const item = contentCache[currentSectionId].find(i => i.id === editBtn.dataset.id);
+                if (item) openContentForm(currentSectionId, item);
+            }
+            if (deleteBtn) showConfirmation('Delete Content Item?', 'This item will be permanently deleted.', () => deleteContentItem(deleteBtn.dataset.id));
+            if (e.target.closest('#add-new-page-btn')) openPageForm();
+            if (editPageBtn) {
+                const page = pagesCache.find(p => p.id === editPageBtn.dataset.id);
+                if(page) openPageForm(page);
+            }
+            if (deletePageBtn) showConfirmation('Delete Page?', `The page and ALL its content will be permanently deleted. This is a very dangerous action.`, () => deletePage(deletePageBtn.dataset.id));
+        });
+        
+        mainContent.addEventListener('input', e => {
+            if (e.target.id === 'search-input') {
+                const searchTerm = e.target.value.toLowerCase();
+                const filtered = contentCache[currentSectionId].filter(item => 
+                    Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm))
+                );
+                renderContentList(currentSectionId, filtered);
+            }
+        });
+
+        modal.container.addEventListener('input', e => {
+            const titleInput = e.target.closest('#page-title-input');
+            const labelInput = e.target.closest('.field-label');
+
+            if (titleInput) {
+                const idInput = modal.form.querySelector('#page-id-input');
+                if(!idInput.dataset.edited) {
+                     idInput.value = titleInput.value.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+                }
+            }
+            if (labelInput) {
+                const row = labelInput.closest('.field-builder-row');
+                const nameInput = row.querySelector('.field-name');
+                const displayFieldSelect = document.getElementById('page-display-field');
+                
+                if (!nameInput.dataset.edited) {
+                    nameInput.value = labelInput.value.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+                }
+                
+                // Update display field options in real-time
+                const textFields = [];
+                modal.form.querySelectorAll('.field-builder-row').forEach(r => {
+                    if(r.querySelector('.field-type').value === 'text') {
+                         textFields.push({ name: r.querySelector('.field-name').value, label: r.querySelector('.field-label').value });
+                    }
+                });
+                const currentDisplayField = displayFieldSelect.value;
+                displayFieldSelect.innerHTML = textFields.map(f => `<option value="${f.name}" ${currentDisplayField === f.name ? 'selected' : ''}>${f.label}</option>`).join('');
+            }
+        });
+        
+        modal.form.addEventListener('submit', handleFormSubmit);
+        modal.closeBtn.addEventListener('click', () => modal.container.classList.add('hidden'));
+
+        function showConfirmation(title, text, onConfirm) {
+            confirmModal.title.textContent = title;
+            confirmModal.text.textContent = text;
+            confirmationCallback = onConfirm;
+            confirmModal.container.classList.remove('hidden');
+        }
+        confirmModal.confirmBtn.addEventListener('click', () => {
+            if (confirmationCallback) confirmationCallback();
+            confirmModal.container.classList.add('hidden');
+        });
+        confirmModal.cancelBtn.addEventListener('click', () => confirmModal.container.classList.add('hidden'));
+
+        // --- DATA ACTIONS (CRUD) ---
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            // Check if this is the page form or content form based on an element
+            if(document.getElementById('page-title-input')) return await handlePageFormSubmit(e);
+            
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true; submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Saving...`;
+
+            const formData = new FormData(form);
+            const data = {};
+            const page = pagesCache.find(p => p.id === currentSectionId);
+            
+            page.fields.forEach(field => {
+                if (field.type === 'headline') return;
+                if (field.type === 'checkbox') {
+                    data[field.name] = formData.has(field.name);
+                } else if (!`${field.name}_file`.includes(formData)) {
+                    data[field.name] = formData.get(field.name);
+                }
+            });
+
+            const itemId = formData.get('id');
+
+            try {
+                // Handle file and image uploads
+                for (const pair of formData.entries()) {
+                    if (pair[0].endsWith('_file') && pair[1].size > 0) {
+                        const fieldName = pair[0].replace('_file', '');
+                        data[fieldName] = await uploadFile(pair[1]);
+                    }
+                }
+
+                if (itemId) {
+                    await updateDoc(doc(db, currentSectionId, itemId), data);
+                } else {
+                    await addDoc(collection(db, currentSectionId), data);
+                }
+                modal.container.classList.add('hidden');
+                fetchContentForPage(currentSectionId);
+            } catch (error) {
+                console.error("Save failed:", error); alert("Error: Could not save item.");
+            } finally {
+                submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText;
+            }
+        }
+        
+        async function handlePageFormSubmit(e) {
+             const form = e.target;
+             const submitBtn = form.querySelector('button[type="submit"]');
+             submitBtn.disabled = true;
+             
+             const title = form.querySelector('#page-title-input').value;
+             let id = form.querySelector('#page-id-input').value;
+             const icon = form.querySelector('#page-icon-input').value;
+             const displayField = form.querySelector('#page-display-field').value;
+             const layout = form.querySelector('#page-layout').value;
+             const button = {
+                 text: form.querySelector('#button-text').value,
+                 icon: form.querySelector('#button-icon').value,
+                 animation: form.querySelector('#button-animation').value,
+                 color: form.querySelector('#button-color').value,
+             };
+             const fields = [];
+             
+             form.querySelectorAll('.field-builder-row').forEach(row => {
+                 fields.push({
+                     label: row.querySelector('.field-label').value,
+                     name: row.querySelector('.field-name').value,
+                     type: row.querySelector('.field-type').value,
+                     required: row.querySelector('.field-required').checked,
+                     placeholder: row.querySelector('.field-placeholder')?.value || '',
+                     helpText: row.querySelector('.field-help-text')?.value || '',
+                     options: row.querySelector('.field-select-options')?.value || ''
+                 });
+             });
+             
+             const pageData = { id, title, icon, fields, displayField, layout, button };
+
+             try {
+                await setDoc(doc(db, '_pages', id), pageData);
+                modal.container.classList.add('hidden');
+                await initializeCms();
+                navigateToSection(id);
+             } catch(error) {
+                 console.error("Page save failed:", error); alert("Error saving page.");
+             } finally {
+                 submitBtn.disabled = false;
+             }
+        }
+        
+        async function deleteContentItem(itemId) {
+            try {
+                await deleteDoc(doc(db, currentSectionId, itemId));
+                fetchContentForPage(currentSectionId);
+            } catch (error) { console.error("Delete failed:", error); }
+        }
+
+        async function deletePage(pageId) {
+            // This is a dangerous operation. In a real app, you'd also delete all documents in the associated collection.
+            try {
+                 await deleteDoc(doc(db, '_pages', pageId));
+                 await initializeCms();
+                 navigateToSection(pagesCache.length > 0 ? pagesCache[0].id : 'manage-pages');
+            } catch (error) { console.error("Page delete failed:", error); }
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', UPLOAD_PRESET);
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: 'POST', body: formData });
+            const data = await res.json();
+            return data.secure_url;
+        }
+
+    </script>
+</body>
+</html>
+
